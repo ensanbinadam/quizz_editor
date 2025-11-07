@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>محرر الأسئلة المطور</title>
+
+    <!-- خط -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- DOMPurify لحماية HTML المُحمّل -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"
+      defer
+    ></script>
+
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>محرر الأسئلة المطور</h1>
+        <p>
+          أنشئ وحرر أسئلة اختبارك ثم قم بتصديرها للاستخدام في الاختبار التفاعلي.
+        </p>
+      </div>
+
+      <div class="buttons-container main-toolbar" id="mainToolbar">
+        <button class="action-btn" id="importButton">📥 استيراد الأسئلة</button>
+        <button class="action-btn" id="exportButton">📤 تصدير الأسئلة</button>
+        <button class="action-btn" id="addNewEndButton">
+          ➕ إضافة سؤال جديد (في النهاية)
+        </button>
+        <button
+          class="action-btn"
+          id="resetQuestionsBtn"
+          style="background-color: #dc3545"
+        >
+          🗑️ مسح كل الأسئلة
+        </button>
+      </div>
+
+      <div class="editor-layout">
+        <div class="editor-container">
+          <!-- لوحة تحرير السؤال -->
+          <div
+            class="settings-panel"
+            id="editPanel"
+            style="display: block; text-align: right"
+          >
+            <div class="settings-title">
+              تحرير السؤال <span id="editingQuestionNumber"></span>
+            </div>
+
+            <div class="settings-option">
+              <label for="editQuestionType">نوع السؤال:</label>
+              <select id="editQuestionType" class="form-control">
+                <option value="multiple-choice">اختيار من متعدد</option>
+                <option value="fill-in-the-blank">املأ الفراغ</option>
+                <option value="true-false">صح / خطأ</option>
+                <option value="short-answer">إجابة قصيرة</option>
+                <option value="matching">مطابقة</option>
+                <option value="ordering">ترتيب</option>
+              </select>
+            </div>
+
+            <div class="settings-option">
+              <label for="editReadingText">النص القرائي (اختياري):</label>
+              <textarea
+                id="editReadingText"
+                class="form-control"
+                rows="4"
+              ></textarea>
+
+              <div class="inline-tools">
+                <div>
+                  <label for="editReadingImage">صورة النص القرائي:</label>
+                  <input type="file" id="editReadingImage" accept="image/*" />
+                  <button
+                    type="button"
+                    class="tiny-btn paste"
+                    id="readingImagePasteBtn"
+                  >
+                    لصق
+                  </button>
+                  <button
+                    type="button"
+                    class="tiny-btn del"
+                    id="readingImageClearBtn"
+                  >
+                    حذف
+                  </button>
+                  <img id="readingImagePreview" class="preview-img" />
+                </div>
+
+                <div>
+                  <label for="editReadingAudio">الصوت القرائي:</label>
+                  <div class="inline-tools">
+                    <button
+                      type="button"
+                      class="nav-btn"
+                      id="insertReadingAudioBtn"
+                      style="padding: 6px 12px"
+                    >
+                      إدراج صوت
+                    </button>
+                    <input
+                      type="file"
+                      id="editReadingAudio"
+                      accept="audio/*"
+                      style="display: none"
+                    />
+                    <button
+                      type="button"
+                      class="tiny-btn del"
+                      id="readingAudioClearBtn"
+                    >
+                      حذف الصوت
+                    </button>
+                  </div>
+                  <audio
+                    id="readingAudioPreview"
+                    class="preview-audio"
+                    controls
+                    preload="none"
+                  ></audio>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-option">
+              <label for="editQuestionText">نص السؤال:</label>
+              <input type="text" id="editQuestionText" class="form-control" />
+              <div class="inline-tools">
+                <label for="editQuestionImage">صورة السؤال:</label>
+                <input type="file" id="editQuestionImage" accept="image/*" />
+                <button
+                  type="button"
+                  class="tiny-btn paste"
+                  id="questionImagePasteBtn"
+                >
+                  لصق
+                </button>
+                <button
+                  type="button"
+                  class="tiny-btn del"
+                  id="questionImageClearBtn"
+                >
+                  حذف
+                </button>
+              </div>
+              <img id="questionImagePreview" class="preview-img" />
+            </div>
+
+            <div id="multipleChoiceEditor">
+              <div class="settings-option">
+                <label>الخيارات (يجب تحديد الإجابة الصحيحة)</label>
+                <div style="display: grid; gap: 10px">
+                  <div>
+                    <input
+                      type="radio"
+                      name="correctOption"
+                      id="correct1"
+                      value="0"
+                    />
+                    <label for="editOption1">الخيار 1:</label>
+                    <input type="text" id="editOption1" class="form-control" />
+                    <div class="inline-tools">
+                      <input
+                        type="file"
+                        id="editOptionImage1"
+                        accept="image/*"
+                      />
+                      <button
+                        type="button"
+                        class="tiny-btn paste"
+                        id="optionImagePasteBtn1"
+                      >
+                        لصق
+                      </button>
+                      <button
+                        type="button"
+                        class="tiny-btn del"
+                        id="optionImageClearBtn1"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                    <img id="optionImagePreview1" class="preview-img" />
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      name="correctOption"
+                      id="correct2"
+                      value="1"
+                    />
+                    <label for="editOption2">الخيار 2:</label>
+                    <input type="text" id="editOption2" class="form-control" />
+                    <div class="inline-tools">
+                      <input
+                        type="file"
+                        id="editOptionImage2"
+                        accept="image/*"
+                      />
+                      <button
+                        type="button"
+                        class="tiny-btn paste"
+                        id="optionImagePasteBtn2"
+                      >
+                        لصق
+                      </button>
+                      <button
+                        type="button"
+                        class="tiny-btn del"
+                        id="optionImageClearBtn2"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                    <img id="optionImagePreview2" class="preview-img" />
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      name="correctOption"
+                      id="correct3"
+                      value="2"
+                    />
+                    <label for="editOption3">الخيار 3:</label>
+                    <input type="text" id="editOption3" class="form-control" />
+                    <div class="inline-tools">
+                      <input
+                        type="file"
+                        id="editOptionImage3"
+                        accept="image/*"
+                      />
+                      <button
+                        type="button"
+                        class="tiny-btn paste"
+                        id="optionImagePasteBtn3"
+                      >
+                        لصق
+                      </button>
+                      <button
+                        type="button"
+                        class="tiny-btn del"
+                        id="optionImageClearBtn3"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                    <img id="optionImagePreview3" class="preview-img" />
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      name="correctOption"
+                      id="correct4"
+                      value="3"
+                    />
+                    <label for="editOption4">الخيار 4:</label>
+                    <input type="text" id="editOption4" class="form-control" />
+                    <div class="inline-tools">
+                      <input
+                        type="file"
+                        id="editOptionImage4"
+                        accept="image/*"
+                      />
+                      <button
+                        type="button"
+                        class="tiny-btn paste"
+                        id="optionImagePasteBtn4"
+                      >
+                        لصق
+                      </button>
+                      <button
+                        type="button"
+                        class="tiny-btn del"
+                        id="optionImageClearBtn4"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                    <img id="optionImagePreview4" class="preview-img" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="fillInTheBlankEditor" style="display: none">
+              <div class="settings-option">
+                <label for="editCorrectAnswer">الإجابة الصحيحة:</label>
+                <input
+                  type="text"
+                  id="editCorrectAnswer"
+                  class="form-control"
+                  placeholder="اكتب الإجابة هنا..."
+                />
+                <p style="font-size: 0.9em; color: #555; margin-top: 8px">
+                  ملاحظة: يمكنك وضع عدة إجابات صحيحة بفصلها بعلامة | (مثال:
+                  إجابة1|إجابة2)
+                </p>
+              </div>
+            </div>
+
+            <div id="trueFalseEditor" style="display: none">
+              <div class="settings-option">
+                <label>الإجابة الصحيحة:</label>
+                <div
+                  style="
+                    display: flex;
+                    gap: 20px;
+                    align-items: center;
+                    margin-top: 10px;
+                  "
+                >
+                  <label
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                      cursor: pointer;
+                    "
+                  >
+                    <input type="radio" name="correctTFAnswer" value="true" />
+                    <span>صح</span>
+                  </label>
+                  <label
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                      cursor: pointer;
+                    "
+                  >
+                    <input type="radio" name="correctTFAnswer" value="false" />
+                    <span>خطأ</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div id="shortAnswerEditor" style="display: none">
+              <div class="settings-option">
+                <label for="editShortAnswer">الإجابة النموذجية:</label>
+                <textarea
+                  id="editShortAnswer"
+                  class="form-control"
+                  rows="4"
+                  placeholder="اكتب الإجابة النموذجية هنا..."
+                ></textarea>
+                <p style="font-size: 0.9em; color: #555; margin-top: 8px">
+                  سيتم اعتبار إجابة الطالب صحيحة إذا تطابقت بنسبة 70% مع هذه
+                  الإجابة.
+                </p>
+              </div>
+            </div>
+
+            <div id="matchingEditor" style="display: none">
+              <div class="settings-option">
+                <label>أزواج المطابقة (بحد أقصى 4 أزواج):</label>
+                <div
+                  style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                    margin-top: 10px;
+                  "
+                >
+                  <input
+                    type="text"
+                    id="editMatchPrompt1"
+                    class="form-control"
+                    placeholder="العنصر 1"
+                  />
+                  <input
+                    type="text"
+                    id="editMatchAnswer1"
+                    class="form-control"
+                    placeholder="الإجابة المطابقة 1"
+                  />
+                  <input
+                    type="text"
+                    id="editMatchPrompt2"
+                    class="form-control"
+                    placeholder="العنصر 2"
+                  />
+                  <input
+                    type="text"
+                    id="editMatchAnswer2"
+                    class="form-control"
+                    placeholder="الإجابة المطابقة 2"
+                  />
+                  <input
+                    type="text"
+                    id="editMatchPrompt3"
+                    class="form-control"
+                    placeholder="العنصر 3"
+                  />
+                  <input
+                    type="text"
+                    id="editMatchAnswer3"
+                    class="form-control"
+                    placeholder="الإجابة المطابقة 3"
+                  />
+                  <input
+                    type="text"
+                    id="editMatchPrompt4"
+                    class="form-control"
+                    placeholder="العنصر 4"
+                  />
+                  <input
+                    type="text"
+                    id="editMatchAnswer4"
+                    class="form-control"
+                    placeholder="الإجابة المطابقة 4"
+                  />
+                </div>
+                <p style="font-size: 0.9em; color: #555; margin-top: 8px">
+                  املأ الأزواج التي تريدها. سيتم تجاهل الأزواج الفارغة. يجب ملء
+                  زوجين على الأقل.
+                </p>
+              </div>
+            </div>
+
+            <div id="orderingEditor" style="display: none">
+              <div class="settings-option">
+                <label>عناصر الترتيب (بالترتيب الصحيح، بحد أقصى 5):</label>
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    margin-top: 10px;
+                  "
+                >
+                  <input
+                    type="text"
+                    id="editOrderItem1"
+                    class="form-control"
+                    placeholder="العنصر 1"
+                  />
+                  <input
+                    type="text"
+                    id="editOrderItem2"
+                    class="form-control"
+                    placeholder="العنصر 2"
+                  />
+                  <input
+                    type="text"
+                    id="editOrderItem3"
+                    class="form-control"
+                    placeholder="العنصر 3"
+                  />
+                  <input
+                    type="text"
+                    id="editOrderItem4"
+                    class="form-control"
+                    placeholder="العنصر 4"
+                  />
+                  <input
+                    type="text"
+                    id="editOrderItem5"
+                    class="form-control"
+                    placeholder="العنصر 5"
+                  />
+                </div>
+                <p style="font-size: 0.9em; color: #555; margin-top: 8px">
+                  املأ العناصر التي تريدها بالترتيب الصحيح. سيتم تجاهل الحقول
+                  الفارغة. يجب ملء عنصرين على الأقل.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="settings-footer"
+              style="
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+              "
+            >
+              <button
+                class="nav-btn"
+                id="saveEditBtn"
+                style="background: #28a745"
+              >
+                حفظ التعديلات
+              </button>
+              <button
+                class="nav-btn"
+                id="saveAndNewBtn"
+                style="background: #007bff"
+              >
+                حفظ وإضافة سؤال جديد
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-list-container" id="questionListContainer">
+          <div class="question-list-header">
+            <h3>قائمة الأسئلة (<span id="questionCount">0</span>)</h3>
+            <p>اسحب وأفلت لإعادة الترتيب</p>
+          </div>
+          <ol id="questionList"></ol>
+        </div>
+      </div>
+    </div>
+
+    <footer id="quizFooter">
+      <a
+        href="https://t.me/Interact2030"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="footer-link-wrap"
+      >
+        برمجة و تصميم/ ملتقى التعليم التفاعلي بملتقى معلمي ومعلمات الرياضيات ـ
+        المملكة العربية السعودية
+      </a>
+    </footer>
+
+    <script src="js/app.js"></script>
+  </body>
+</html>
