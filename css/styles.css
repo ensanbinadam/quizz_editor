@@ -1,0 +1,397 @@
+/* ========= 1. الإعدادات الأساسية والمتغيرات ========= */
+:root {
+  --font-family-base: "Tajawal", "Segoe UI", "Noto Sans Arabic", Tahoma,
+    Geneva, Verdana, sans-serif;
+  --color-primary: #007bff; /* أزرق عصري */
+  --color-primary-dark: #0056b3;
+  --color-secondary: #6c757d;
+  --color-success: #28a745;
+  --color-danger: #dc3545;
+  --color-warning: #ffc107;
+  --color-light: #f8f9fa;
+  --color-dark: #343a40;
+  --color-text: #212529;
+  --color-bg: #f4f7f6; /* خلفية رمادية فاتحة جداً */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--font-family-base);
+}
+body {
+  background-color: var(--color-bg);
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  color: var(--color-text);
+}
+.container {
+  max-width: 1400px;
+  margin: 20px auto;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeIn 0.5s ease-out forwards;
+}
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========= 2. الترويسة وشريط الأدوات ========= */
+.header {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #fff;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.header h1 {
+  margin: 0 0 8px 0;
+  color: var(--color-primary);
+  font-size: 1.8em;
+}
+.header p {
+  margin: 0;
+  font-size: 1.1em;
+  color: #555;
+}
+
+.buttons-container.main-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+  padding: 16px;
+  background: #fff;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.action-btn {
+  border: none;
+  padding: 12px 28px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: 1.05em;
+  font-weight: 600;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  background: var(--color-primary);
+  color: #fff;
+}
+.action-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(95%);
+}
+
+/* ========= 3. تصميم المحرر الرئيسي ========= */
+.editor-layout {
+  display: grid;
+  grid-template-columns: 1fr 450px;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.editor-container {
+  grid-column: 1 / 2;
+}
+
+.question-list-container {
+  grid-column: 2 / 3;
+  position: sticky;
+  top: 20px;
+  background: #fff;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+}
+
+.question-list-header {
+  border-bottom: 2px solid #eee;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+.question-list-header h3 {
+  margin: 0 0 5px 0;
+  color: var(--color-primary-dark);
+}
+.question-list-header p {
+  margin: 0;
+  font-size: 0.9em;
+  color: #777;
+}
+
+#questionList {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+#questionList li {
+  background-color: var(--color-light);
+  border: 2px solid #e0e0e0;
+  border-radius: var(--border-radius-md);
+  margin-bottom: 12px;
+  padding: 12px;
+  cursor: grab;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#questionList li:active {
+  cursor: grabbing;
+}
+#questionList li.active {
+  background-color: #e0ecff;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+#questionList li.ghost {
+  opacity: 0.5;
+  background: #c8d8f0;
+}
+.question-list-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+}
+.question-list-item-header .drag-handle {
+  cursor: grab;
+  font-size: 1.2em;
+  color: #999;
+}
+.question-list-item-preview {
+  font-size: 0.95em;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.question-list-item-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  border-top: 1px solid #ddd;
+  padding-top: 8px;
+}
+.question-list-item-controls button {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius-sm);
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.question-list-item-controls button:hover {
+  background-color: #f0f0f0;
+}
+.question-list-item-controls .delete-btn:hover {
+  background-color: var(--color-danger);
+  color: #fff;
+  border-color: var(--color-danger);
+}
+
+/* ========= 4. لوحة التحرير ========= */
+.settings-panel {
+  background: #fff;
+  padding: 24px;
+  border-radius: var(--border-radius-lg);
+  color: var(--color-text);
+  border: 1px solid #e0e0e0;
+  box-shadow: var(--shadow-sm);
+}
+.settings-title {
+  font-weight: 700;
+  margin-bottom: 20px;
+  font-size: 1.5em;
+  color: var(--color-primary);
+  padding-bottom: 10px;
+  border-bottom: 2px solid #eee;
+}
+.settings-option {
+  margin-bottom: 20px;
+}
+.settings-option label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.settings-option select,
+.settings-option input,
+.settings-option textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid #ccc;
+  font-size: 1em;
+}
+.settings-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+.nav-btn {
+  border: none;
+  padding: 12px 28px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: 1.05em;
+  font-weight: 600;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  background: var(--color-primary);
+  color: #fff;
+}
+.nav-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(95%);
+}
+
+#editPanel .settings-option {
+  padding: 16px;
+  border: 1px solid #eee;
+  border-radius: var(--border-radius-md);
+  background: var(--color-light);
+}
+#editPanel .settings-option > label {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+#editPanel .settings-option > div[style*="gap"] > div {
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius-sm);
+}
+#editPanel input[type="radio"] {
+  margin-left: 8px;
+}
+
+/* أدوات الوسائط الصغيرة */
+.inline-tools {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.tiny-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  background: #e9ecef;
+  color: var(--color-dark);
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+.tiny-btn:hover {
+  background-color: #d1d5db;
+}
+.tiny-btn.del {
+  background: var(--color-danger);
+  color: #fff;
+}
+.tiny-btn.paste {
+  background: #17a2b8;
+  color: #fff;
+}
+.preview-img {
+  display: none;
+  max-width: 100%;
+  height: auto;
+  max-height: 160px;
+  margin-top: 10px;
+  border-radius: var(--border-radius-sm);
+  border: 2px dashed #ccc;
+  padding: 4px;
+  object-fit: contain;
+}
+.preview-audio {
+  display: none;
+  width: 100%;
+  margin: 10px 0;
+}
+.form-control {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid #ccc;
+  resize: vertical;
+  font-size: 1em;
+}
+
+/* ========= 5. التذييل ========= */
+footer {
+  position: relative;
+  max-width: 900px;
+  margin: 40px auto 20px;
+  text-align: center;
+  padding: 16px;
+  background: #ffffff;
+  color: var(--color-secondary);
+  direction: rtl;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.9em;
+}
+#quizFooter a.footer-link-wrap {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+#quizFooter a.footer-link-wrap:hover {
+  text-decoration: underline;
+  color: var(--color-primary);
+}
+
+/* ========= 6. توافقية الموبايل ========= */
+@media (max-width: 1200px) {
+  .editor-layout {
+    grid-template-columns: 1fr 380px;
+  }
+}
+@media (max-width: 992px) {
+  .editor-layout {
+    grid-template-columns: 1fr;
+  }
+  .question-list-container {
+    grid-row: 1;
+    position: static;
+    margin-bottom: 24px;
+  }
+  #questionList {
+    max-height: 40vh;
+  }
+}
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+  .container {
+    margin: 10px auto;
+  }
+  #editPanel .settings-option > div[style*="gap"] {
+    grid-template-columns: 1fr;
+  }
+}
