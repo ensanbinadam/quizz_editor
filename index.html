@@ -11,7 +11,16 @@
       href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/styles.css" />
+    <style>
+      body {
+        font-family: "Tajawal", sans-serif;
+      }
+      .rte-content[placeholder]:empty:before {
+        content: attr(placeholder);
+        color: #9ca3af; /* text-gray-400 */
+        cursor: text;
+      }
+    </style>
     <script
       src="https://unpkg.com/react@18/umd/react.development.js"
       crossorigin
@@ -136,7 +145,11 @@
 
         switch (baseQuestion.type) {
           case "multiple-choice": {
-            const options = q.options || [];
+            const options = (q.options || []).map((opt) => ({
+              text: "",
+              image: null,
+              ...opt,
+            }));
             return {
               ...baseQuestion,
               type: "multiple-choice",
@@ -180,7 +193,10 @@
             return {
               ...baseQuestion,
               type: baseQuestion.type,
-              pairs: pairs,
+              pairs: pairs.map((p) => ({
+                prompt: { text: "", image: null, ...p.prompt },
+                answer: { text: "", image: null, ...p.answer },
+              })),
             };
           }
 
@@ -487,12 +503,172 @@
         </svg>
       );
 
+      // ======== FROM: components/PreviewModal.jsx ========
+      const PreviewModal = ({ question, onClose }) => {
+        if (!question) return null;
+
+        const renderContent = (content) => {
+          if (!content) return null;
+          return (
+            <div
+              dangerouslySetInnerHTML={{ __html: content }}
+              className="prose max-w-none"
+            />
+          );
+        };
+
+        const renderMedia = (media) => {
+          if (!media) return null;
+          return (
+            <img
+              src={media}
+              alt="معاينة الصورة"
+              className="mt-4 rounded-lg max-w-full h-auto max-h-80 object-contain"
+            />
+          );
+        };
+
+        const renderQuestionBody = () => {
+          switch (question.type) {
+            case "multiple-choice":
+              return (
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  {(question.options || []).map((opt, i) => (
+                    <div
+                      key={i}
+                      className="p-4 border rounded-lg bg-white flex flex-col items-center justify-center text-center min-h-[120px]"
+                    >
+                      {opt.image && (
+                        <img
+                          src={opt.image}
+                          className="max-h-24 mb-2 object-contain"
+                        />
+                      )}
+                      {renderContent(opt.text)}
+                    </div>
+                  ))}
+                </div>
+              );
+            case "true-false":
+              return (
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <div className="p-4 border rounded-lg bg-white flex items-center justify-center text-center min-h-[120px] font-bold text-lg">
+                    صح
+                  </div>
+                  <div className="p-4 border rounded-lg bg-white flex items-center justify-center text-center min-h-[120px] font-bold text-lg">
+                    خطأ
+                  </div>
+                </div>
+              );
+            case "matching":
+            case "connecting-lines":
+              return (
+                <div className="flex justify-between gap-4 mt-4">
+                  <div className="w-1/2 space-y-3">
+                    {(question.pairs || []).map((p, i) => (
+                      <div
+                        key={`prompt-${i}`}
+                        className="p-3 border rounded-lg bg-gray-100 flex flex-col items-center text-center"
+                      >
+                        {p.prompt.image && (
+                          <img
+                            src={p.prompt.image}
+                            className="max-h-32 mb-2 mx-auto object-contain"
+                          />
+                        )}
+                        {renderContent(p.prompt.text)}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="w-1/2 space-y-3">
+                    {(question.pairs || []).map((p, i) => (
+                      <div
+                        key={`answer-${i}`}
+                        className="p-3 border rounded-lg bg-white flex flex-col items-center text-center"
+                      >
+                        {p.answer.image && (
+                          <img
+                            src={p.answer.image}
+                            className="max-h-32 mb-2 mx-auto object-contain"
+                          />
+                        )}
+                        {renderContent(p.answer.text)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            case "ordering":
+              return (
+                <div className="space-y-3 mt-4">
+                  {(question.items || []).map((item, i) => (
+                    <div
+                      key={i}
+                      className="p-3 border rounded-lg bg-white flex items-center gap-4"
+                    >
+                      <span className="text-gray-400">☰</span>
+                      {item.image && (
+                        <img
+                          src={item.image}
+                          className="max-h-32 object-contain"
+                        />
+                      )}
+                      {renderContent(item.text)}
+                    </div>
+                  ))}
+                </div>
+              );
+            default:
+              return (
+                <div className="mt-4 p-4 border-2 border-dashed rounded-lg text-center text-gray-500">
+                  معاينة هذا النوع من الأسئلة غير متاحة بعد.
+                </div>
+              );
+          }
+        };
+
+        return (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={onClose}
+          >
+            <div
+              className="bg-gray-100 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={onClose}
+                className="absolute top-3 left-3 bg-gray-200 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"
+              >
+                &times;
+              </button>
+              <h2 className="text-2xl font-bold text-blue-600 mb-4 text-center">
+                معاينة السؤال
+              </h2>
+
+              {question.reading?.text && (
+                <div className="p-4 mb-4 bg-white border rounded-lg">
+                  {renderContent(question.reading.text)}
+                </div>
+              )}
+              {question.reading?.image && renderMedia(question.reading.image)}
+
+              <div className="p-4 bg-white border rounded-lg">
+                <div className="font-bold text-xl mb-2">
+                  {renderContent(question.question.text)}
+                </div>
+                {renderMedia(question.question.image)}
+                {renderQuestionBody()}
+              </div>
+            </div>
+          </div>
+        );
+      };
+
       // ======== FROM: components/RichTextEditor.jsx ========
       const RichTextEditor = ({ value, onChange, placeholder, height }) => {
         const editorRef = React.useRef(null);
 
-        // This effect ensures the editor's content is updated only when the `value` prop changes from outside.
-        // It prevents React from re-rendering and resetting the cursor/direction on every input.
         React.useEffect(() => {
           if (editorRef.current && value !== editorRef.current.innerHTML) {
             editorRef.current.innerHTML = value || "";
@@ -505,16 +681,15 @@
 
         const handleCommand = (command, value = null) => {
           document.execCommand(command, false, value);
-          // After executing a command, we might need to re-focus to ensure the next command works
           if (editorRef.current) {
             editorRef.current.focus();
           }
-          onChange(editorRef.current.innerHTML); // Immediately reflect changes
+          onChange(editorRef.current.innerHTML);
         };
 
         return (
           <div className="border rounded-md bg-white">
-            <div className="flex items-center gap-2 p-2 bg-gray-100 border-b rounded-t-md">
+            <div className="flex items-center gap-2 p-2 bg-gray-100 border-b rounded-t-md flex-wrap">
               <button
                 type="button"
                 onClick={() => handleCommand("bold")}
@@ -539,7 +714,7 @@
               <button
                 type="button"
                 onClick={() => handleCommand("justifyRight")}
-                className="w-8 h-8 hover:bg-gray-200 rounded"
+                className="w-8 h-8 hover:bg-gray-200 rounded flex items-center justify-center"
                 title="محاذاة لليمين"
               >
                 <svg
@@ -562,7 +737,7 @@
               <button
                 type="button"
                 onClick={() => handleCommand("justifyCenter")}
-                className="w-8 h-8 hover:bg-gray-200 rounded"
+                className="w-8 h-8 hover:bg-gray-200 rounded flex items-center justify-center"
                 title="توسيط"
               >
                 <svg
@@ -585,7 +760,7 @@
               <button
                 type="button"
                 onClick={() => handleCommand("justifyLeft")}
-                className="w-8 h-8 hover:bg-gray-200 rounded"
+                className="w-8 h-8 hover:bg-gray-200 rounded flex items-center justify-center"
                 title="محاذاة لليسار"
               >
                 <svg
@@ -614,8 +789,7 @@
               <select
                 onChange={(e) => {
                   if (e.target.value) {
-                    editorRef.current?.focus(); // Re-focus the editor before executing the command
-                    document.execCommand("fontSize", false, e.target.value);
+                    handleCommand("fontSize", e.target.value);
                   }
                 }}
                 className="p-1 border rounded-md text-sm bg-white cursor-pointer h-8"
@@ -652,15 +826,15 @@
                 <option value="±">±</option>
                 <option value="√">√</option>
               </select>
+              <button
+                type="button"
+                onClick={() => handleCommand("removeFormat")}
+                className="w-8 h-8 hover:bg-gray-200 rounded flex justify-center items-center"
+                title="مسح التنسيق"
+              >
+                <RemoveFormattingIcon size={18} />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => handleCommand("removeFormat")}
-              className="w-8 h-8 hover:bg-gray-200 rounded flex justify-center items-center"
-              title="مسح التنسيق"
-            >
-              <RemoveFormattingIcon size={18} />
-            </button>
             <div
               ref={editorRef}
               contentEditable
@@ -684,7 +858,7 @@
         onDuplicateQuestion,
         onAddNewQuestion,
         onDragStart,
-        onDrop, // New props for filtering and searching
+        onDrop,
         filterType,
         onFilterChange,
         searchTerm,
@@ -737,7 +911,6 @@
             </div>
             <ul className="space-y-2 max-h-[75vh] overflow-y-auto pr-2">
               {questions.map((q, index) => {
-                // Use originalIndex for actions, but the list's own index for display logic
                 const originalIndex = q.originalIndex;
                 const isActive = originalIndex === currentQuestionIndex;
                 const previewText =
@@ -745,7 +918,7 @@
                   "...";
                 return (
                   <li
-                    key={originalIndex} // Use originalIndex for a stable key
+                    key={originalIndex}
                     draggable
                     onDragStart={() => onDragStart(originalIndex)}
                     onDragOver={(e) => handleDragOver(e, index)}
@@ -865,10 +1038,11 @@
         };
 
         return (
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-700">{label}</h3>
-            <div className="flex items-center gap-2">
+          <div className="space-y-2">
+            {label && <h3 className="font-semibold text-gray-700">{label}</h3>}
+            <div className="flex items-center gap-2 flex-wrap">
               <button
+                type="button"
                 onClick={() => imageInputRef.current?.click()}
                 className="flex items-center gap-2 text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded-md transition-colors"
               >
@@ -882,6 +1056,7 @@
                 className="hidden"
               />
               <button
+                type="button"
                 onClick={() => handlePaste(onImageChange)}
                 className="flex items-center gap-2 text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded-md transition-colors"
               >
@@ -889,6 +1064,7 @@
               </button>
               {image && (
                 <button
+                  type="button"
                   onClick={() => onImageChange(null)}
                   className="flex items-center gap-2 text-sm bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1.5 rounded-md transition-colors"
                 >
@@ -908,6 +1084,7 @@
               <>
                 <div className="flex items-center gap-2">
                   <button
+                    type="button"
                     onClick={() => audioInputRef.current?.click()}
                     className="flex items-center gap-2 text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded-md transition-colors"
                   >
@@ -922,6 +1099,7 @@
                   />
                   {audio && (
                     <button
+                      type="button"
                       onClick={() => onAudioChange(null)}
                       className="flex items-center gap-2 text-sm bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1.5 rounded-md transition-colors"
                     >
@@ -943,6 +1121,7 @@
         onUpdate,
         questionNumber,
         onSaveAndNew,
+        onPreview,
       }) => {
         const [localQuestion, setLocalQuestion] = React.useState(question);
         const [draggedItem, setDraggedItem] = React.useState({
@@ -958,38 +1137,14 @@
           setLocalQuestion((prev) => ({ ...prev, [key]: value }));
         };
 
-        const handleNestedChange = (part, key, value) => {
+        const handleNestedChange = (parentKey, childKey, value) => {
           setLocalQuestion((prev) => ({
             ...prev,
-            [part]: { ...prev[part], [key]: value },
+            [parentKey]: {
+              ...prev[parentKey],
+              [childKey]: value,
+            },
           }));
-        };
-
-        const handleSave = () => {
-          // Clean trailing spaces and &nbsp; before updating
-          const cleanHtml = (html) =>
-            (html || "").replace(/(<p><br><\/p>|\s|&nbsp;)*$/, "").trim();
-
-          // Before saving, convert `pairs` back to `prompts` and `answers` for compatibility
-          if (
-            localQuestion.type === "matching" ||
-            localQuestion.type === "connecting-lines"
-          ) {
-            const pairs = localQuestion.pairs || [];
-            localQuestion.prompts = pairs.map(
-              (p) => p.prompt || { text: "", image: null }
-            );
-            localQuestion.answers = pairs.map(
-              (p) => p.answer || { text: "", image: null }
-            );
-            delete localQuestion.pairs; // Clean up the temporary property
-          }
-
-          localQuestion.reading.text = cleanHtml(localQuestion.reading.text);
-          localQuestion.question.text = cleanHtml(localQuestion.question.text);
-          localQuestion.feedback = cleanHtml(localQuestion.feedback);
-
-          onUpdate(localQuestion);
         };
 
         const handleTypeChange = (e) => {
@@ -999,6 +1154,7 @@
             reading: localQuestion.reading,
             question: localQuestion.question,
           });
+          setLocalQuestion(newQuestionState);
           onUpdate(newQuestionState);
         };
 
@@ -1013,15 +1169,18 @@
         };
 
         const handlePairChange = (index, part, key, value) => {
-          const newPairs = [...localQuestion.pairs];
-          newPairs[index] = {
-            ...newPairs[index],
-            [part]: {
-              ...(newPairs[index]?.[part] || {}),
-              [key]: value,
-            },
-          };
-          handleChange("pairs", newPairs);
+          setLocalQuestion((prev) => {
+            const newPairs = JSON.parse(JSON.stringify(prev.pairs || []));
+            if (!newPairs[index]) newPairs[index] = { prompt: {}, answer: {} };
+            if (!newPairs[index][part]) newPairs[index][part] = {};
+
+            newPairs[index][part][key] = value;
+
+            return {
+              ...prev,
+              pairs: newPairs,
+            };
+          });
         };
 
         const handleRemovePair = (index) => {
@@ -1053,7 +1212,6 @@
           let currentArray = localQuestion[type];
           let correctIndex = localQuestion.correct;
 
-          // Adjust correct index for multiple-choice options
           if (type === "options") {
             const draggedOptionIsCorrect = draggedItem.index === correctIndex;
             const targetOptionIsCorrect = targetIndex === correctIndex;
@@ -1090,6 +1248,50 @@
           setDraggedItem({ type: null, index: -1 });
         };
 
+        const handleSave = () => {
+          // Create a deep copy to avoid direct state mutation
+          const questionToSave = JSON.parse(JSON.stringify(localQuestion));
+
+          const cleanHtml = (html) =>
+            (html || "").replace(/(<p><br><\/p>|\s|&nbsp;)*$/, "").trim();
+
+          // Clean the main text fields
+          questionToSave.reading.text = cleanHtml(questionToSave.reading.text);
+          questionToSave.question.text = cleanHtml(
+            questionToSave.question.text
+          );
+          questionToSave.feedback = cleanHtml(questionToSave.feedback);
+
+          // For matching/connecting, use React state as the source of truth, not the DOM.
+          if (
+            questionToSave.type === "matching" ||
+            questionToSave.type === "connecting-lines"
+          ) {
+            // Filter out pairs that are completely empty
+            const validPairs = (questionToSave.pairs || []).filter(
+              (p) =>
+                (p.prompt && (p.prompt.text || p.prompt.image)) ||
+                (p.answer && (p.answer.text || p.answer.image))
+            );
+
+            questionToSave.pairs = validPairs;
+
+            // For export compatibility, generate `prompts` and `answers` arrays from the pairs.
+            // These are needed for the final JSON output format.
+            questionToSave.prompts = validPairs.map(
+              (p) => p.prompt || { text: "", image: null }
+            );
+            questionToSave.answers = validPairs.map(
+              (p) => p.answer || { text: "", image: null }
+            );
+            // The original code had `delete questionToSave.pairs;` here, which caused the bug.
+            // By NOT deleting `pairs`, the editor's state remains consistent upon re-render.
+          }
+
+          onUpdate(questionToSave);
+          return questionToSave;
+        };
+
         const renderEditorFields = () => {
           switch (localQuestion.type) {
             case "multiple-choice":
@@ -1100,13 +1302,14 @@
                       الخيارات (يجب تحديد الإجابة الصحيحة)
                     </label>
                     <button
+                      type="button"
                       onClick={handleAddOption}
                       className="flex items-center gap-2 bg-blue-500 text-white font-semibold py-1.5 px-4 rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
                     >
                       <PlusIcon size={16} /> إضافة خيار
                     </button>
                   </div>
-                  {localQuestion.options?.map((opt, index) => (
+                  {(localQuestion.options || []).map((opt, index) => (
                     <div
                       key={index}
                       draggable
@@ -1123,6 +1326,7 @@
                       <div className="absolute top-2 left-2 flex items-center gap-1">
                         {localQuestion.options.length > 2 && (
                           <button
+                            type="button"
                             onClick={() => {
                               let newCorrect = localQuestion.correct;
                               if (index === localQuestion.correct) {
@@ -1264,12 +1468,13 @@
                   ? "أزواج المطابقة"
                   : "أزواج التوصيل";
               return (
-                <div className="space-y-5">
+                <div className="space-y-5 editor-panel-pairs">
                   <div className="flex justify-between items-center">
                     <label className="font-semibold text-lg text-gray-800">
                       {title}
                     </label>
                     <button
+                      type="button"
                       onClick={() => {
                         const newPairs = [
                           ...(localQuestion.pairs || []),
@@ -1292,7 +1497,7 @@
                       onDragStart={() => handleDragStart("pairs", index)}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={() => handleDrop("pairs", index)}
-                      className="p-3 bg-white rounded-lg border relative transition-shadow hover:shadow-md"
+                      className="p-3 bg-white rounded-lg border relative transition-shadow hover:shadow-md pair-card"
                     >
                       <div className="absolute top-2 right-2 flex items-center gap-2">
                         <div className="cursor-grab text-gray-400">
@@ -1316,7 +1521,7 @@
                                 e.target.value
                               )
                             }
-                            className="w-full p-2 border rounded-md"
+                            className="w-full p-2 border rounded-md prompt-input"
                           />
                           <MediaInput
                             label=""
@@ -1342,7 +1547,7 @@
                                 e.target.value
                               )
                             }
-                            className="w-full p-2 border rounded-md"
+                            className="w-full p-2 border rounded-md answer-input"
                           />
                           <MediaInput
                             label=""
@@ -1355,6 +1560,7 @@
                       </div>
                       <div className="absolute top-2 left-2">
                         <button
+                          type="button"
                           onClick={() => handleRemovePair(index)}
                           className="p-1.5 text-red-500 hover:text-red-700 rounded-full hover:bg-red-100"
                           title="حذف الزوج"
@@ -1376,9 +1582,10 @@
                       عناصر الترتيب (بالترتيب الصحيح):
                     </label>
                     <button
+                      type="button"
                       onClick={() => {
                         const newItems = [
-                          ...localQuestion.items,
+                          ...(localQuestion.items || []),
                           { text: "", image: null },
                         ];
                         handleChange("items", newItems);
@@ -1388,7 +1595,7 @@
                       <PlusIcon size={16} /> إضافة عنصر
                     </button>
                   </div>
-                  {localQuestion.items?.map((item, index) => (
+                  {(localQuestion.items || []).map((item, index) => (
                     <div
                       key={index}
                       draggable
@@ -1404,6 +1611,7 @@
                       </div>
                       <div className="absolute top-2 left-2">
                         <button
+                          type="button"
                           onClick={() => {
                             const newItems = localQuestion.items.filter(
                               (_, i) => i !== index
@@ -1496,7 +1704,7 @@
               </label>
               <RichTextEditor
                 value={localQuestion.reading.text}
-                onChange={(e) => handleNestedChange("reading", "text", e)}
+                onChange={(html) => handleNestedChange("reading", "text", html)}
                 placeholder="اكتب النص القرائي هنا..."
               />
               <MediaInput
@@ -1517,7 +1725,9 @@
               <RichTextEditor
                 placeholder="اكتب السؤال هنا..."
                 value={localQuestion.question.text}
-                onChange={(e) => handleNestedChange("question", "text", e)}
+                onChange={(html) =>
+                  handleNestedChange("question", "text", html)
+                }
                 height="80px"
               />
               <MediaInput
@@ -1540,7 +1750,7 @@
               <RichTextEditor
                 placeholder="اكتب هنا شرحًا للإجابة الصحيحة أو سبب خطأ الإجابات الأخرى. ستظهر هذه الرسالة للطالب بعد الإجابة."
                 value={localQuestion.feedback || ""}
-                onChange={(e) => handleChange("feedback", e)}
+                onChange={(html) => handleChange("feedback", html)}
                 height="96px"
               />
               <p className="text-sm text-gray-500">
@@ -1564,6 +1774,15 @@
               >
                 <PlusCircle /> حفظ وإضافة جديد
               </button>
+              <button
+                onClick={() => {
+                  const savedQuestion = handleSave();
+                  onPreview(savedQuestion);
+                }}
+                className="flex items-center gap-2 bg-gray-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-gray-600 transition-colors shadow"
+              >
+                معاينة
+              </button>
             </div>
           </div>
         );
@@ -1577,6 +1796,7 @@
         const [draggedIndex, setDraggedIndex] = React.useState(null);
         const [filterType, setFilterType] = React.useState("all");
         const [searchTerm, setSearchTerm] = React.useState("");
+        const [previewQuestion, setPreviewQuestion] = React.useState(null);
 
         const fileInputRef = React.useRef(null);
 
@@ -1620,6 +1840,11 @@
 
             const initialQuestion = ensureQuestionSanity({
               type: "multiple-choice",
+              options: [
+                { text: "", image: null },
+                { text: "", image: null },
+              ],
+              correct: 0,
             });
             setQuestions([initialQuestion]);
             setCurrentQuestionIndex(0);
@@ -1655,7 +1880,14 @@
         };
 
         const handleAddNewQuestion = (index = -1) => {
-          const newQuestion = ensureQuestionSanity({ type: "multiple-choice" });
+          const newQuestion = ensureQuestionSanity({
+            type: "multiple-choice",
+            options: [
+              { text: "", image: null },
+              { text: "", image: null },
+            ],
+            correct: 0,
+          });
           const newQuestions = [...questions];
           const insertionIndex = index === -1 ? questions.length : index;
           newQuestions.splice(insertionIndex, 0, newQuestion);
@@ -1681,6 +1913,8 @@
             setQuestions(newQuestions);
             if (currentQuestionIndex >= index) {
               setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1));
+            } else {
+              setCurrentQuestionIndex(currentQuestionIndex);
             }
           }
         };
@@ -1699,27 +1933,33 @@
           setDraggedIndex(index);
         };
 
-        const handleQuestionDrop = (targetIndex) => {
-          if (draggedIndex === null || draggedIndex === targetIndex) {
+        const handleQuestionDrop = (targetOriginalIndex) => {
+          const sourceOriginalIndex = draggedIndex;
+          if (
+            sourceOriginalIndex === null ||
+            sourceOriginalIndex === targetOriginalIndex
+          ) {
             setDraggedIndex(null);
             return;
           }
 
-          const newQuestions = [...questions];
-          const [draggedItem] = newQuestions.splice(draggedIndex, 1);
-          newQuestions.splice(targetIndex, 0, draggedItem);
+          const newQuestions = moveItem(
+            questions,
+            sourceOriginalIndex,
+            targetOriginalIndex
+          );
 
           let newCurrentIndex = currentQuestionIndex;
-          if (currentQuestionIndex === draggedIndex) {
-            newCurrentIndex = targetIndex;
+          if (currentQuestionIndex === sourceOriginalIndex) {
+            newCurrentIndex = targetOriginalIndex;
           } else if (
-            draggedIndex < currentQuestionIndex &&
-            targetIndex >= currentQuestionIndex
+            sourceOriginalIndex < currentQuestionIndex &&
+            targetOriginalIndex >= currentQuestionIndex
           ) {
             newCurrentIndex--;
           } else if (
-            draggedIndex > currentQuestionIndex &&
-            targetIndex <= currentQuestionIndex
+            sourceOriginalIndex > currentQuestionIndex &&
+            targetOriginalIndex <= currentQuestionIndex
           ) {
             newCurrentIndex++;
           }
@@ -1770,14 +2010,10 @@
               setQuestions((prevQuestions) => {
                 const isPlaceholder =
                   prevQuestions.length === 1 &&
-                  prevQuestions[0].type === "multiple-choice" &&
-                  !prevQuestions[0].reading.text &&
-                  !prevQuestions[0].reading.image &&
-                  !prevQuestions[0].reading.audio &&
-                  !prevQuestions[0].question.text &&
+                  !stripHtml(prevQuestions[0].question.text) &&
                   !prevQuestions[0].question.image &&
-                  prevQuestions[0].options.every(
-                    (opt) => !opt.text && !opt.image
+                  (prevQuestions[0].options || []).every(
+                    (o) => !o.text && !o.image
                   );
 
                 let finalQuestions;
@@ -1826,6 +2062,11 @@
               await dbClear();
               const initialQuestion = ensureQuestionSanity({
                 type: "multiple-choice",
+                options: [
+                  { text: "", image: null },
+                  { text: "", image: null },
+                ],
+                correct: 0,
               });
               setQuestions([initialQuestion]);
               setCurrentQuestionIndex(0);
@@ -1840,7 +2081,7 @@
 
         const displayedQuestions = React.useMemo(() => {
           return questions
-            .map((q, index) => ({ ...q, originalIndex: index })) // Attach original index
+            .map((q, index) => ({ ...q, originalIndex: index }))
             .filter((item) => {
               const typeMatch =
                 filterType === "all" || item.type === filterType;
@@ -1909,24 +2150,33 @@
                       onUpdate={handleUpdateQuestion}
                       questionNumber={currentQuestionIndex + 1}
                       onSaveAndNew={handleSaveAndAddNew}
+                      onPreview={setPreviewQuestion}
+                    />
+                  )}
+                  {previewQuestion && (
+                    <PreviewModal
+                      question={previewQuestion}
+                      onClose={() => setPreviewQuestion(null)}
                     />
                   )}
                 </div>
                 <div className="lg:col-span-1">
-                  <QuestionList
-                    questions={displayedQuestions}
-                    currentQuestionIndex={currentQuestionIndex}
-                    onSelectQuestion={handleSelectQuestion}
-                    onDeleteQuestion={handleDeleteQuestion}
-                    onDuplicateQuestion={handleDuplicateQuestion}
-                    onAddNewQuestion={handleAddNewQuestion}
-                    onDragStart={handleQuestionDragStart}
-                    onDrop={handleQuestionDrop}
-                    filterType={filterType}
-                    onFilterChange={setFilterType}
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                  />
+                  {questions.length > 0 && (
+                    <QuestionList
+                      questions={displayedQuestions}
+                      currentQuestionIndex={currentQuestionIndex}
+                      onSelectQuestion={handleSelectQuestion}
+                      onDeleteQuestion={handleDeleteQuestion}
+                      onDuplicateQuestion={handleDuplicateQuestion}
+                      onAddNewQuestion={handleAddNewQuestion}
+                      onDragStart={handleQuestionDragStart}
+                      onDrop={handleQuestionDrop}
+                      filterType={filterType}
+                      onFilterChange={setFilterType}
+                      searchTerm={searchTerm}
+                      onSearchChange={setSearchTerm}
+                    />
+                  )}
                 </div>
               </main>
 
@@ -1948,6 +2198,7 @@
 
       // ======== Render the App ========
       const rootElement = document.getElementById("root");
+
       if (!rootElement) {
         throw new Error("Could not find root element to mount to");
       }
